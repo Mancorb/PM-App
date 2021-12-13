@@ -3,7 +3,6 @@ import tkinter.messagebox
 from tkinter import ttk
 import sqlite3
 from random import randint
-from typing import Type
 #--------------------------------------------------------
 #methods
 
@@ -14,7 +13,7 @@ def OpenAddMenu():
     AddMenuStructure()
 #Struture code for the Add Password Menu
 def AddMenuStructure():
-    backcol="#151f56"
+    backcol=background_color
     #title
     titulo=Label(add_password_frame,text="Add Password",bg = backcol,fg = "white",font = font_title)#main title
     titulo.place(x=80, y=25)
@@ -67,7 +66,7 @@ def OpenVerifyMenu(site_data, user_data, pass_data):
     VerifyInfoStructure(site_data, user_data, pass_data)
 #Structure code for the verify menu
 def VerifyInfoStructure(site_data, user_data, pass_data):
-    backcol="#151f56"
+    backcol=background_color
     user_data_info="User: "+user_data
     pass_data_info="Pass: "+pass_data
     #title
@@ -95,7 +94,6 @@ def CommitComfirm(site_data, user_data, pass_data):
         cur=con.cursor()
         id=getID(cur)
 
-        print("New id=",id,type(id))
         cur.execute(f"INSERT INTO list VALUES('{site_data}','{user_data}','{pass_data}',{id})")
         con.commit()
         con.close()
@@ -160,7 +158,7 @@ def OpenSearchMenuStructure():
 
     #Remove selected
     deleteB= Button(search_password_frame,text="Delete",
-                    command=lambda:deleteRow(infotable.selection()),
+                    command=lambda:openDeleteMenu(infotable.selection()),
                     font="Bebas_Neue 12")
     deleteB.place(x=400,y=450,width=70)
     #Copy selected
@@ -190,11 +188,11 @@ def OpenSearchMenuStructure():
     sub.place(x=10, y=400)
 #hide all frames
 def HideAllFrames():
-    print("All frames are hidden")
     add_password_frame.pack_forget()
     search_password_frame.pack_forget()
     verify_password_frame.pack_forget()
     modify_data_frame.pack_forget()
+    delete_data_frame.pack_forget()
 
 def openModifyMenu(user,site, pswrd,id):
     HideAllFrames()
@@ -218,17 +216,17 @@ def ModifyMenuStructure(user,site,pswrd,id):
     OGsite=Label(modify_data_frame,text='Site:',bg = backcol,fg = "black",font= f'Bebas_Neue {size} bold')
     OGsite.place(x=20,y=90)
     NWsite=Entry(modify_data_frame,textvariable=InSite,font=font_normal)
-    NWsite.place(x=20,y=130)
+    NWsite.place(x=20,y=130, width=370)
 
     OGuser=Label(modify_data_frame,text='User:',bg = backcol,fg = "black",font= f'Bebas_Neue {size} bold')
     OGuser.place(x=20,y=190)
     NWuser=Entry(modify_data_frame,textvariable=InUser,font=font_normal)
-    NWuser.place(x=20,y=240)
+    NWuser.place(x=20,y=240, width=370)
 
     OGpwrd=Label(modify_data_frame,text='Password:',bg = backcol,fg = "black",font= f'Bebas_Neue {size} bold')
     OGpwrd.place(x=20,y=320)
     NWpass=Entry(modify_data_frame,textvariable=InPwrd,font='Bebas_Neue 10 bold')
-    NWpass.place(x=20,y=370,width=300)
+    NWpass.place(x=20,y=370,width=370)
     
     #Change Button
     CancelB=Button(modify_data_frame,text="Cancel", command=ReturnToSearch, font="Bebas_Neue 19 bold")
@@ -256,7 +254,6 @@ def NoticeModification(site_data, user_data, pass_data,user,site, pswrd,id):
     con=sqlite3.connect('testbd.db')
     cur=con.cursor()
     try:
-        print(f"UPDATE List SET site='{site_data}',user='{user_data}',pass='{pass_data}' WHERE id={id};")
         cur.execute(f"UPDATE List SET site='{site_data}',user='{user_data}',pass='{pass_data}' WHERE id={id};")
         con.commit()
         tkinter.messagebox.showinfo("UPDATED",'The database has been updated')
@@ -264,7 +261,32 @@ def NoticeModification(site_data, user_data, pass_data,user,site, pswrd,id):
         tkinter.messagebox.showerror("Error",e)
     con.close()
     OpenSearchMenu()
+
+def openDeleteMenu(cel):
+    HideAllFrames()
+    delete_data_frame.pack(fill='both',expand=1)
+    cel=extractInfo(cel)
+    DeleteMenuStructure(cel)
+
+def DeleteMenuStructure(cel):
+    backcol="red"
+    #title
+    titulo=Label(delete_data_frame,text="WARNING",bg = backcol,fg = "black",font = font_title)#main title
+    titulo.place(x=140, y=15)
     
+    text=Label(delete_data_frame,
+                text="You are about to PERMANENTLY DELETE\nthis PASSWORD and all the related DATA!\nARE YOU SURE?",
+                bg = backcol,fg = "black",font = 'Bebas_Neue 18 bold')
+    text.place(x=10,y=120)
+
+    #confirm Button
+    ConfirmB=Button(delete_data_frame,text="YES", command=lambda:deleteRow(cel), font="Bebas_Neue 19 bold")
+    ConfirmB.place(x=350,y=300,height=60, width=130)
+    
+    #deny Button
+    DenyB=Button(delete_data_frame,text="NO",command=ReturnToSearch, font="Bebas_Neue 19 bold")
+    DenyB.place (x=20,y=300,height=60, width=130)
+
 #password created notification
 def NoticeCrtPas(password):
     user_info=username.get()
@@ -293,10 +315,9 @@ def refresh(inputdata,type,table):
         if inputdata:
             sequence=f"SELECT * FROM list WHERE {type} LIKE '%{inputdata}%' ORDER BY id"
         else: sequence='SELECT * FROM list ORDER BY id'
-        print(sequence)
         isrtDataInTbl(table,sequence)
     except Exception as e:
-        print("--ERROR:",e)
+        tkinter.messagebox.showerror("Error",e)
         isrtDataInTbl(table)
 
 def isrtDataInTbl(infotable,command=None):
@@ -347,22 +368,21 @@ def process(lowerLetters,UpperLetters,symbols):
         final+=temp
     return final#returns the final string (the generated password)
 
-def deleteRow(sel):
+
+def deleteRow(id):
+    con=sqlite3.connect('testbd.db')
+    cur=con.cursor()
     try:
-        print (sel[0])
-        con=sqlite3.connect('testbd.db')
-        cur=con.cursor()
-        cur.execute(f'SELECT * FROM List WHERE ID ={sel[0]}')
-        res= cur.fetchall()
-        print(res)
-        con.close()
+        cur.execute(f"DELETE FROM List WHERE id={id}")
+        con.commit()
     except Exception as e:
-        tkinter.messagebox.showerror("Error",f"Nothing selected")
+        tkinter.messagebox.showerror("Error",e)
+    con.close()
+    ReturnToSearch()
 
 def copyRow(sel):
     try:
         root.clipboard_clear()
-        print(sel[0])
         con=sqlite3.connect('testbd.db')
         cur=con.cursor()
         cur.execute(f'SELECT pass FROM List WHERE id = {sel[0]}')
@@ -375,7 +395,7 @@ def copyRow(sel):
         root.clipboard_append(total)
         con.close()
     except Exception as e:
-        print(e)
+        tkinter.messagebox.showerror("Error",e)
 
 def updateRow(sel):
     try:
@@ -410,6 +430,7 @@ root.resizable(False, False)
 font_title=("Bebas_Neue",35,"bold")
 font_normal=("Bebas_Neue",19)
 #colors
+global background_color
 background_color="#131f2e"
 buttonColor="#1992b6"
 root ['bg']='#131f2e'
@@ -460,10 +481,11 @@ SearchMenu.add_command(label="Search Password", command=OpenSearchMenu)
 #------------------------------------------------------------------
 #creation of frames
 #default frame is the "create frame"
-add_password_frame= Frame(root, width=500, height=500, bg='#151f56')
-verify_password_frame= Frame(root, width=500, height=500, bg='#151f56')
+add_password_frame= Frame(root, width=500, height=500, bg=background_color)
+verify_password_frame= Frame(root, width=500, height=500, bg=background_color)
 search_password_frame= Frame(root, width=500, height=500, bg='white')
 modify_data_frame= Frame(root, width=500, height=500, bg='white')
+delete_data_frame= Frame(root, width=500, height=500, bg='red')
 #------------------------------------------------------------------
 
 root.mainloop()
