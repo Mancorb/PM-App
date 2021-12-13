@@ -162,7 +162,17 @@ def OpenSearchMenuStructure():
     deleteB= Button(search_password_frame,text="Delete",
                     command=lambda:deleteRow(infotable.selection()),
                     font="Bebas_Neue 12")
-    deleteB.place(x=50,y=450)
+    deleteB.place(x=400,y=450,width=70)
+    #Copy selected
+    copyB= Button(search_password_frame,text="Copy Selected",
+                    command=lambda:copyRow(infotable.selection()),
+                    font="Bebas_Neue 12")
+    copyB.place(x=40,y=450, width=160)
+    #Edit selected
+    editB= Button(search_password_frame,text="Edit",
+                    command=lambda:updateRow(infotable.selection()),
+                    font="Bebas_Neue 12")
+    editB.place(x=300,y=450,width=90)
 
     #table
     infotable=ttk.Treeview(search_password_frame, columns=(1,2,3,4), show="headings", height=5)
@@ -184,9 +194,77 @@ def HideAllFrames():
     add_password_frame.pack_forget()
     search_password_frame.pack_forget()
     verify_password_frame.pack_forget()
-#click command
-def dummy():
-    pass
+    modify_data_frame.pack_forget()
+
+def openModifyMenu(user,site, pswrd,id):
+    HideAllFrames()
+    modify_data_frame.pack(fill='both', expand=1)
+    ModifyMenuStructure(user,site, pswrd,id)
+
+def ModifyMenuStructure(user,site,pswrd,id):
+    backcol="white"
+    size=19
+    #title
+    titulo=Label(modify_data_frame,text="Modify",bg = backcol,fg = "black",font = font_title)#main title
+    titulo.place(x=60, y=15)
+    #variables
+    InSite=StringVar()
+    InSite.set(site)
+    InUser=StringVar()
+    InUser.set(user)
+    InPwrd=StringVar()
+    InPwrd.set(pswrd)
+    #inputs to modify info
+    OGsite=Label(modify_data_frame,text='Site:',bg = backcol,fg = "black",font= f'Bebas_Neue {size} bold')
+    OGsite.place(x=20,y=90)
+    NWsite=Entry(modify_data_frame,textvariable=InSite,font=font_normal)
+    NWsite.place(x=20,y=130)
+
+    OGuser=Label(modify_data_frame,text='User:',bg = backcol,fg = "black",font= f'Bebas_Neue {size} bold')
+    OGuser.place(x=20,y=190)
+    NWuser=Entry(modify_data_frame,textvariable=InUser,font=font_normal)
+    NWuser.place(x=20,y=240)
+
+    OGpwrd=Label(modify_data_frame,text='Password:',bg = backcol,fg = "black",font= f'Bebas_Neue {size} bold')
+    OGpwrd.place(x=20,y=320)
+    NWpass=Entry(modify_data_frame,textvariable=InPwrd,font='Bebas_Neue 10 bold')
+    NWpass.place(x=20,y=370,width=300)
+    
+    #Change Button
+    CancelB=Button(modify_data_frame,text="Cancel", command=ReturnToSearch, font="Bebas_Neue 19 bold")
+    CancelB.place(x=20,y=420,height=60, width=130)
+    #Apply Button
+    ConfirmB=Button(modify_data_frame,text="Confirm",command=lambda:NoticeModification(InSite.get(), InUser.get(), InPwrd.get(), user,site, pswrd,id), font="Bebas_Neue 19 bold")
+    ConfirmB.place(x=350,y=420,height=60, width=130)
+
+def ReturnToSearch():
+    HideAllFrames()
+    OpenSearchMenu()
+
+def NoticeModification(site_data, user_data, pass_data,user,site, pswrd,id):
+    warn=False
+    if not site_data:
+        site_data=site
+        warn=True
+    if not user_data:
+        user_data=user
+        warn=True
+    if not pass_data:
+        pass_data=pswrd
+        warn=True
+    if warn: tkinter.messagebox.showwarning("Warning","The original information will be used to replace th empty input")
+    con=sqlite3.connect('testbd.db')
+    cur=con.cursor()
+    try:
+        print(f"UPDATE List SET site='{site_data}',user='{user_data}',pass='{pass_data}' WHERE id={id};")
+        cur.execute(f"UPDATE List SET site='{site_data}',user='{user_data}',pass='{pass_data}' WHERE id={id};")
+        con.commit()
+        tkinter.messagebox.showinfo("UPDATED",'The database has been updated')
+    except Exception as e:
+        tkinter.messagebox.showerror("Error",e)
+    con.close()
+    OpenSearchMenu()
+    
 #password created notification
 def NoticeCrtPas(password):
     user_info=username.get()
@@ -229,7 +307,7 @@ def isrtDataInTbl(infotable,command=None):
         cur.execute(command)
         rows = cur.fetchall()
         for dt in rows:
-            infotable.insert('','end',iid=dt[3],values=(dt[3],dt[1],dt[2],dt[0]))
+            infotable.insert('','end',iid=dt[3],values=(dt[3],dt[0],dt[1],dt[2]))
         conexion.close()
     else:
         infotable.insert("",'end',text="L1",
@@ -270,7 +348,58 @@ def process(lowerLetters,UpperLetters,symbols):
     return final#returns the final string (the generated password)
 
 def deleteRow(sel):
-    print (sel[0])
+    try:
+        print (sel[0])
+        con=sqlite3.connect('testbd.db')
+        cur=con.cursor()
+        cur.execute(f'SELECT * FROM List WHERE ID ={sel[0]}')
+        res= cur.fetchall()
+        print(res)
+        con.close()
+    except Exception as e:
+        tkinter.messagebox.showerror("Error",f"Nothing selected")
+
+def copyRow(sel):
+    try:
+        root.clipboard_clear()
+        print(sel[0])
+        con=sqlite3.connect('testbd.db')
+        cur=con.cursor()
+        cur.execute(f'SELECT pass FROM List WHERE id = {sel[0]}')
+        pswrd=cur.fetchone()
+        pswrd=str(pswrd[0])
+        total=''
+        for i in pswrd:
+            if i!='(' and i!=')' and i != ',' and i != ' ' and i != '[' and i != ']':
+                total=total+i
+        root.clipboard_append(total)
+        con.close()
+    except Exception as e:
+        print(e)
+
+def updateRow(sel):
+    try:
+        id=extractInfo(sel[0])
+        con=sqlite3.connect('testbd.db')
+        cur=con.cursor()
+        data=['site','user','pass']
+        counter=0
+        for i in data:
+            cur.execute(f"SELECT {i} FROM List WHERE id={id}")
+            temp=cur.fetchone()
+            data[counter]=extractInfo(temp)
+            counter=counter+1
+        openModifyMenu(data[1],data[0],data[2],id)
+    except Exception as e:
+        tkinter.messagebox.showwarning("Warning",e)
+    
+def extractInfo(info):
+    id=str(info)
+    res=''
+    for i in id:
+        if i!='(' and i !=')' and i!=',' and i != "'":
+            res=res+i
+    return res
 #--------------------------------------------------------
 #root settings
 root=Tk()
@@ -334,6 +463,7 @@ SearchMenu.add_command(label="Search Password", command=OpenSearchMenu)
 add_password_frame= Frame(root, width=500, height=500, bg='#151f56')
 verify_password_frame= Frame(root, width=500, height=500, bg='#151f56')
 search_password_frame= Frame(root, width=500, height=500, bg='white')
+modify_data_frame= Frame(root, width=500, height=500, bg='white')
 #------------------------------------------------------------------
 
 root.mainloop()
