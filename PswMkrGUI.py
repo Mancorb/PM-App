@@ -160,17 +160,17 @@ def OpenSearchMenuStructure():
     deleteB= Button(search_password_frame,text="Delete",
                     command=lambda:openDeleteMenu(infotable.selection()),
                     font="Bebas_Neue 12")
-    deleteB.place(x=400,y=450,width=70)
+    deleteB.place(x=400,y=440,width=70)
     #Copy selected
     copyB= Button(search_password_frame,text="Copy Selected",
                     command=lambda:copyRow(infotable.selection()),
                     font="Bebas_Neue 12")
-    copyB.place(x=40,y=450, width=160)
+    copyB.place(x=40,y=440, width=160)
     #Edit selected
     editB= Button(search_password_frame,text="Edit",
                     command=lambda:updateRow(infotable.selection()),
                     font="Bebas_Neue 12")
-    editB.place(x=300,y=450,width=90)
+    editB.place(x=300,y=440,width=90)
 
     #table
     infotable=ttk.Treeview(search_password_frame, columns=(1,2,3,4), show="headings", height=5)
@@ -230,10 +230,10 @@ def ModifyMenuStructure(user,site,pswrd,id):
     
     #Change Button
     CancelB=Button(modify_data_frame,text="Cancel", command=ReturnToSearch, font="Bebas_Neue 19 bold")
-    CancelB.place(x=20,y=420,height=60, width=130)
+    CancelB.place(x=20,y=410,height=60, width=130)
     #Apply Button
     ConfirmB=Button(modify_data_frame,text="Confirm",command=lambda:NoticeModification(InSite.get(), InUser.get(), InPwrd.get(), user,site, pswrd,id), font="Bebas_Neue 19 bold")
-    ConfirmB.place(x=350,y=420,height=60, width=130)
+    ConfirmB.place(x=350,y=410,height=60, width=130)
 
 def ReturnToSearch():
     HideAllFrames()
@@ -263,10 +263,12 @@ def NoticeModification(site_data, user_data, pass_data,user,site, pswrd,id):
     OpenSearchMenu()
 
 def openDeleteMenu(cel):
-    HideAllFrames()
-    delete_data_frame.pack(fill='both',expand=1)
-    cel=extractInfo(cel)
-    DeleteMenuStructure(cel)
+    if cel:
+        HideAllFrames()
+        delete_data_frame.pack(fill='both',expand=1)
+        cel=extractInfo(cel)
+        DeleteMenuStructure(cel)
+    else:tkinter.messagebox.showwarning("Warning","Nothing selected")
 
 def DeleteMenuStructure(cel):
     backcol="red"
@@ -395,7 +397,7 @@ def copyRow(sel):
         root.clipboard_append(total)
         con.close()
     except Exception as e:
-        tkinter.messagebox.showerror("Error",e)
+        tkinter.messagebox.showerror("Error","Nothing selected")
 
 def updateRow(sel):
     try:
@@ -411,7 +413,7 @@ def updateRow(sel):
             counter=counter+1
         openModifyMenu(data[1],data[0],data[2],id)
     except Exception as e:
-        tkinter.messagebox.showwarning("Warning",e)
+        tkinter.messagebox.showwarning("Warning","Nothing selected")
     
 def extractInfo(info):
     id=str(info)
@@ -426,6 +428,7 @@ root=Tk()
 root.title("Password Manager")
 root.geometry("500x500")
 root.resizable(False, False)
+root.iconbitmap("logo_icono.ico")
 #esthetics Font
 font_title=("Bebas_Neue",35,"bold")
 font_normal=("Bebas_Neue",19)
