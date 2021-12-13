@@ -54,7 +54,6 @@ def NoticeAddPas(user_info,site_info,pass_info,add_pass_entry,add_user_entry,add
     if site_info=="" or user_info=="" or pass_info=="":
         tkinter.messagebox.showerror("Error",f"Please fill in all the data")
     else:
-        tkinter.messagebox.showinfo("Registry created","Click ok to continue")
         add_pass_entry.delete(0, END)
         add_user_entry.delete(0, END)
         add_site_entry.delete(0, END)
@@ -100,24 +99,30 @@ def CommitComfirm(site_data, user_data, pass_data):
         tkinter.messagebox.showinfo("Registry created",f"Data:\nSite: {site_data}\nUser: {user_data}\nPass: {pass_data}\nClick ok to continue")
     except Exception as e:
         tkinter.messagebox.showerror("ERROR",f"{e}")
+    ReturnToAdd()
+def ReturnToAdd():
     HideAllFrames()
-
+    OpenAddMenu()
 def getID(cur):
     cur.execute("SELECT id FROM List ORDER BY id;")
     id=cur.fetchall()
     try:
         id=str(id)
-        counter=1
-    
+        temp=''
+        specialChars ="[](),'"
+        for specialChar in specialChars:
+            id=id.replace(specialChar,'')
+        if id=='':
+            return 1
+
         for i in id:
-            if i !='(' and i !=')' and i != ',' and i != '[' and i != ']' and i != ' ':
-                if counter==int(i):
-                    counter=counter+1
-                else:
-                    return counter+1
-        return counter
+            if i !=' ':
+                temp=temp+i
+            if i==' ':
+                temp=''
+        return int(temp)+1
     except Exception as e:
-        return 1
+        tkinter.messagebox.showerror("Error",e)
 #Open search password menu
 def OpenSearchMenu():
     HideAllFrames()
