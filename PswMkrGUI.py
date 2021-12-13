@@ -1,5 +1,9 @@
 from tkinter import *
 import tkinter.messagebox
+from tkinter import ttk
+import sqlite3
+from random import randint
+from typing import Type
 #--------------------------------------------------------
 #methods
 
@@ -86,14 +90,94 @@ def VerifyInfoStructure(site_data, user_data, pass_data):
     ApplyInfo.place(x=300,y=360,height=60, width=130)
 #Notify User data has been saved ---INCOMPLETE---
 def CommitComfirm(site_data, user_data, pass_data):
-    tkinter.messagebox.showinfo("Registry created",f"Data:\nSite: {site_data}\nUser: {user_data}\nPass: {pass_data}\nClick ok to continue")
+    try:
+        con=sqlite3.connect('testbd.db')
+        cur=con.cursor()
+        id=getID(cur)
+
+        print("New id=",id,type(id))
+        cur.execute(f"INSERT INTO list VALUES('{site_data}','{user_data}','{pass_data}',{id})")
+        con.commit()
+        con.close()
+        tkinter.messagebox.showinfo("Registry created",f"Data:\nSite: {site_data}\nUser: {user_data}\nPass: {pass_data}\nClick ok to continue")
+    except Exception as e:
+        tkinter.messagebox.showerror("ERROR",f"{e}")
     HideAllFrames()
+
+def getID(cur):
+    cur.execute("SELECT id FROM List ORDER BY id;")
+    id=cur.fetchall()
+    try:
+        id=str(id)
+        counter=1
     
+        for i in id:
+            if i !='(' and i !=')' and i != ',' and i != '[' and i != ']' and i != ' ':
+                if counter==int(i):
+                    counter=counter+1
+                else:
+                    return counter+1
+        return counter
+    except Exception as e:
+        return 1
 #Open search password menu
 def OpenSearchMenu():
     HideAllFrames()
     search_password_frame.pack(fill='both', expand=1)
+    OpenSearchMenuStructure()
+
+def OpenSearchMenuStructure():
+    backcol="white"
+    titulo=Label(search_password_frame,text="Search Password",bg = backcol,fg = "black",font = font_title)
+    titulo.place(x=10, y=5)
+
+    #input variables
+    query=StringVar()
+    currentvar=StringVar()
+
+    #List of options
+    options=['Site','User','Pass']
+
+    #user inputs
+    searcher = Entry(search_password_frame,textvariable=query,
+                        bg=backcol, font="Bebas_Neue 12")#web site info
+
+    searcher.place(x=10,y=70, height=30, width=300)
+
+    #Dropbox
+    filterinfo=OptionMenu(search_password_frame ,currentvar,options[0],options[1],options[2])
     
+    #Set the current option
+    currentvar.set(options[0])
+  
+    filterinfo.place(x=310,y=70, width=70, height=30)
+
+    #button
+    searchB= Button(search_password_frame,text="Search",
+                    command=lambda:refresh(query.get(),
+                    currentvar.get(),infotable), font="Bebas_Neue 12")
+    searchB.place(x=380,y=70,width=70, height=30)
+
+    #Remove selected
+    deleteB= Button(search_password_frame,text="Delete",
+                    command=lambda:deleteRow(infotable.selection()),
+                    font="Bebas_Neue 12")
+    deleteB.place(x=50,y=450)
+
+    #table
+    infotable=ttk.Treeview(search_password_frame, columns=(1,2,3,4), show="headings", height=5)
+    infotable.column(1,width=30, anchor="c")
+    infotable.column(2,width=110, anchor="c")
+    infotable.column(3,width=130, anchor="c")
+    infotable.column(4,width=210, anchor="c")
+    infotable.heading(1,text="ID")
+    infotable.heading(2,text="Web Site")
+    infotable.heading(3,text="User name / email")
+    infotable.heading(4,text="Password")
+    infotable.place(x=10, y=120, height=300)
+
+    sub=Label(search_password_frame,text="Options",bg = backcol,fg = "black",font = font_normal)
+    sub.place(x=10, y=400)
 #hide all frames
 def HideAllFrames():
     print("All frames are hidden")
@@ -103,22 +187,90 @@ def HideAllFrames():
 #click command
 def dummy():
     pass
-
 #password created notification
 def NoticeCrtPas(password):
-
     user_info=username.get()
     site_info=site.get()
 
     if site_info!="" or user_info!="":
-        tkinter.messagebox.showinfo("Password created",f"Your password:{password} has been\nadded to the data base")
-        site_entry.delete(0, END)
-        user_entry.delete(0, END)
+        try:
+            con=sqlite3.connect('testbd.db')
+            cur=con.cursor()
+            id=getID(cur)
+            cur.execute(f"INSERT INTO list VALUES('{site_info}','{user_info}','{password}',{id})")
+            con.commit()
+            con.close()
+            tkinter.messagebox.showinfo("Password created",f"Your password:{password} has been\nadded to the data base")
+            site_entry.delete(0, END)
+            user_entry.delete(0, END)
+        except Exception as e:
+            tkinter.messagebox.showerror("Error",e)
     else:
         tkinter.messagebox.showerror("Error",f"Please fill in the site and user data")
+#Search button for the search table
+def refresh(inputdata,type,table):
+    for i in table.get_children():
+        table.delete(i)
+    try:
+        if inputdata:
+            sequence=f"SELECT * FROM list WHERE {type} LIKE '%{inputdata}%' ORDER BY id"
+        else: sequence='SELECT * FROM list ORDER BY id'
+        print(sequence)
+        isrtDataInTbl(table,sequence)
+    except Exception as e:
+        print("--ERROR:",e)
+        isrtDataInTbl(table)
 
+def isrtDataInTbl(infotable,command=None):
+    if command:
+        conexion = sqlite3.connect('testbd.db')
+        cur=conexion.cursor()
+        #Run command
+        cur.execute(command)
+        rows = cur.fetchall()
+        for dt in rows:
+            infotable.insert('','end',iid=dt[3],values=(dt[3],dt[1],dt[2],dt[0]))
+        conexion.close()
+    else:
+        infotable.insert("",'end',text="L1",
+                        values=('',"NONE","NONE",
+                            "NONE"))
 
+def CreatePass():
+    lowerLetters=['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+    UpperLetters=['A', 'B', 'C', 'D', 'E', 'F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
+    symbols=['|','#','$','&','%','/','-','+','_']
+    password=process(lowerLetters,UpperLetters,symbols)
+    NoticeCrtPas(password)
+def process(lowerLetters,UpperLetters,symbols):
+    final='' #Create empty string to store password
+    for i in range(30):#Create a password with 30 characters
+        key=randint(1,1000)#Chooses a number between 1 and 1000
+        #first checks if the number can be devided by 2
+        if (key%2)==0:
+            #It will add a random character from a specific list of characters
+            #depending if the "key" is greater of smaller then 500
+            if key<=500:
+                #uselower
+                temp=lowerLetters[randint(0,len(lowerLetters)-1)] 
+                #choose a character without overlapping ammount of characters available
+            if key>500:
+                #useupper
+                temp=UpperLetters[randint(0,len(UpperLetters)-1)]
+        else: #If it is not divisible by 2 it will do the same process but with different characters
+            if key<=500:
+                #useNumber
+                temp=str(randint(0,10))
+            if key>500:
+                #useSymbol
+                temp=symbols[randint(0,len(symbols)-1)]
 
+        #Adds selected character to the final string
+        final+=temp
+    return final#returns the final string (the generated password)
+
+def deleteRow(sel):
+    print (sel[0])
 #--------------------------------------------------------
 #root settings
 root=Tk()
@@ -155,7 +307,9 @@ site_entry.place(x=170,y=168, height=30, width=260)
 user_entry.place(x=170,y=260, height=30, width=260)
 
 #button for entry
-create_password_button = Button(text="Create", width="10", height="1", command=lambda:NoticeCrtPas(password), bg="white",font="Bebas_Neue 19 bold")
+create_password_button = Button(text="Create", width="10", height="1",
+                                command=CreatePass,
+                                bg="white",font="Bebas_Neue 19 bold")
 create_password_button.place(x=175,y=360)
 #----------------------------------------------------------------
 
@@ -181,7 +335,5 @@ add_password_frame= Frame(root, width=500, height=500, bg='#151f56')
 verify_password_frame= Frame(root, width=500, height=500, bg='#151f56')
 search_password_frame= Frame(root, width=500, height=500, bg='white')
 #------------------------------------------------------------------
-
-
 
 root.mainloop()
