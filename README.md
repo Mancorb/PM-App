@@ -14,4 +14,10 @@ Currentlly the app allows you to:
 This project is still under development, if you encounter any issues, bugs or have any sugestions please let us know in the issues section of the github page.
 
 NOTE:
+
 The first time you run the program it's possible it may conflict with your antivirus software, no need to worry the app works locally (just you and your data), you only need to tell it to ignore it.
+
+INSTALATION:
+
+
+Just download the Ver X.X .exe file (this file name will be changing due to the updates). This file is the installer with all the files you'll need (exe file, logo img & local DB).
