@@ -1,6 +1,8 @@
 # Password Manager App
 A python-based app, developed in Tkinter and SQLite, designed to help the average user create and administrate passwords that are designed to be complex enough to keep your accounts safe.
 
+Compatible OS: Windows 8, Windows 10 & Windows 11.
+
 Currently, the app allows you to:
 
 1.-Let the algorithm generates a new password for you and stores it.
